@@ -1,0 +1,71 @@
+import joblib
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import accuracy_score, f1_score, classification_report
+from xgboost import XGBClassifier
+
+from load_data import load_outcomes, load_college, build_training_set, label_encode
+from features import build_preprocessor, NUMERIC_FEATURES, CATEGORICAL_FEATURES
+
+#Includes random seed to ensure reproducibility
+np.random.seed(42)
+
+def train_model():
+    #Load data 
+    outcomes = load_outcomes()
+    college = load_college()
+
+    #Build training set
+    train_df = build_training_set(college, outcomes)
+    train_df, label_map = label_encode(train_df)
+
+    #Features and target
+    X = train_df[NUMERIC_FEATURES + CATEGORICAL_FEATURES]
+    y = train_df["label"]
+
+    #Train/val split
+    X_train, X_val, y_train, y_val = train_test_split(
+        X, y, test_size=0.2, stratify=y, random_state=42
+    )
+
+    #Preprocessor
+    preprocessor = build_preprocessor()
+
+    #Model
+    model = XGBClassifier(
+        objective="multi:softprob",
+        num_class=4,
+        n_estimators=300,
+        max_depth=5, 
+        learning_rate=0.05,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        eval_metric="mlogloss",
+        random_state=42
+    )
+
+    #Pipeline
+    clf = Pipeline(steps=[
+        ("preprocess", preprocessor),
+        ("model", model)
+    ])
+
+    #Train
+    clf.fit(X_train, y_train)
+
+    #Evaluate
+    y_pred = clf.predict(X_val)
+    print("Accuracy:", accuracy_score(y_val, y_pred))
+    print("Macro F1:", f1_score(y_val, y_pred, average="macro"))
+    print(classification_report(y_val, y_pred))
+
+    #Save model and label map
+    joblib.dump(clf, "models/nba_outcome_model2.pkl")
+    joblib.dump(label_map, "models/label_map2.pkl")
+
+    print("Model was saved.")
+
+if __name__ == "__main__":
+    train_model()
