@@ -6,8 +6,8 @@ from features import NUMERIC_FEATURES, CATEGORICAL_FEATURES, ENGINEERED_FEATURES
 
 def predict_prospects():
     #Loads model and label map
-    clf = joblib.load("models/nba_outcome_logreg2.pkl")
-    label_map = joblib.load("models/label_logreg2.pkl")
+    clf = joblib.load("models/nba_outcome_lightgbm.pkl")
+    label_map = joblib.load("models/label_lightgbm.pkl")
     inv_label_map = {v: k for k, v in label_map.items()}
 
     #Load Prospects
@@ -31,4 +31,4 @@ def predict_prospects():
 
 if __name__ == "__main__":
     df = predict_prospects()
-    df.to_csv("prospect_predictions5.csv", index=False)
+    df.to_csv("prospect_predictions6.csv", index=False)
