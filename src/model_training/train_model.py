@@ -1,7 +1,7 @@
 import joblib
 import pandas as pd
 import numpy as np
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score, f1_score, classification_report
 from xgboost import XGBClassifier
@@ -33,27 +33,41 @@ def train_model():
     #Preprocessor
     preprocessor = build_preprocessor()
 
-    #Model
-    model = XGBClassifier(
-        objective="multi:softprob",
-        num_class=4,
-        n_estimators=300,
-        max_depth=5, 
-        learning_rate=0.05,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        eval_metric="mlogloss",
-        random_state=42
-    )
-
     #Pipeline
-    clf = Pipeline(steps=[
+    pipeline = Pipeline(steps=[
         ("preprocess", preprocessor),
-        ("model", model)
+        ("model", XGBClassifier(
+            objective="multi:softprob",
+            num_class=4,
+            eval_metric="mlogloss",
+            random_state=42
+        ))
     ])
 
-    #Train
-    clf.fit(X_train, y_train)
+    #Hyperparameter grid
+    param_grid = {
+        "model__n_estimators": [200,300,400],
+        "model__max_depth": [3, 5, 7],
+        "model__learning_rate": [0.01, 0.05, 0.1],
+        "model__subsample": [0.7, 0.8, 1.0],
+        "model__colsample_bytree": [0.7, 0.8, 1.0]
+    }
+
+    #GridSearchCV
+    grid = GridSearchCV(
+        estimator=pipeline,
+        param_grid=param_grid,
+        cv=5,
+        scoring="f1_macro",
+        n_jobs=-1,
+        verbose=2
+    )
+
+    #Training with grid search
+    grid.fit(X_train, y_train)
+
+    #Best model
+    clf = grid.best_estimator_
 
     #Evaluate
     y_pred = clf.predict(X_val)
@@ -62,8 +76,8 @@ def train_model():
     print(classification_report(y_val, y_pred))
 
     #Save model and label map
-    joblib.dump(clf, "models/nba_outcome_model2.pkl")
-    joblib.dump(label_map, "models/label_map2.pkl")
+    joblib.dump(clf, "models/nba_outcome_model3.pkl")
+    joblib.dump(label_map, "models/label_map3.pkl")
 
     print("Model was saved.")
 

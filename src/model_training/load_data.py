@@ -5,7 +5,7 @@ def load_outcomes():
     return pd.read_csv("data/New_NBA_Outcomes.csv")
 
 def load_college():
-    return pd.read_csv("data/Total_Filtered_NBA_College_Stats.csv")
+    return pd.read_csv("data/ML_Ready_NBA_College_Stats.csv")
 
 def load_prospects():
     return pd.read_csv("data/NBAProspects2026.csv")
