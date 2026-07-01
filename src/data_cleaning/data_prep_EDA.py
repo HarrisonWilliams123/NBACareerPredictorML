@@ -1,6 +1,7 @@
 import pandas as pd
 
 df = pd.read_csv("data/ML_Ready_NBA_College_Stats.csv")
+df2 = pd.read_csv("data/NBAProspects2026.csv")
 
 group_0 = ['Intl']
 group_1 = ['BW', 'BE', 'WCC', 'MVC', 'A-10', 'Patriot', 'SB', 'MWC', 'CUSA', 
@@ -51,3 +52,22 @@ df.loc[313, 'Class'] = 'SO'
 df['Class'] = df['Class'].replace({'FR': 0, 'SO': 1, 'JR': 2, 'SR': 3})
 
 df.to_csv("data/EDA_Ready_NBA_College_Stats.csv", index=False)
+
+df2['Class'] = df2['Class'].replace({'FR': 0, 'SO': 1, 'JR': 2, 'SR': 3})
+df2['Pos'] = df2['Pos'].replace({'G': 0, 'F': 1, 'C': 2})
+
+group_zero = ['ABA', 'Liga ACB', 'NBL']
+group_one = ['WCC', 'Big East', 'American']
+group_two = []
+group_three = ['SEC', 'ACC', 'Big 12', 'Big Ten']
+
+mapping = {c:0 for c in group_zero} | \
+          {c:1 for c in group_one} | \
+          {c:2 for c in group_two} | \
+          {c:3 for c in group_three}
+
+df2['Conf'] = df2['Conf'].replace(mapping)
+
+df2.to_csv("data/EDA_Ready_NBAProspects.csv")
+
+
