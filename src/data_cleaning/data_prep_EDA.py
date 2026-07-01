@@ -1,6 +1,6 @@
 import pandas as pd
 
-df = pd.read_csv("data/Total_Filtered_NBA_College_Stats.csv")
+df = pd.read_csv("data/ML_Ready_NBA_College_Stats.csv")
 
 group_0 = ['Intl']
 group_1 = ['BW', 'BE', 'WCC', 'MVC', 'A-10', 'Patriot', 'SB', 'MWC', 'CUSA', 
@@ -50,4 +50,4 @@ df.loc[313, 'Class'] = 'SO'
 
 df['Class'] = df['Class'].replace({'FR': 0, 'SO': 1, 'JR': 2, 'SR': 3})
 
-df.to_csv("data/Total_Filtered_NBA_College_Stats.csv", index=False)
+df.to_csv("data/EDA_Ready_NBA_College_Stats.csv", index=False)

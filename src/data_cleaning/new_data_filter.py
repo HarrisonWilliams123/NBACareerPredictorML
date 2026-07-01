@@ -13,4 +13,4 @@ college_stats_df = pd.read_csv("data/FinishedTotalNBACollegeStats.csv")
 #Filters the college stats dataframe
 filtered_college_df = college_stats_df[college_stats_df["player_id"].isin(outcomes_df["player_id"])]
 
-filtered_college_df.to_csv("data/Total_Filtered_NBA_College_Stats.csv", index=False)
+filtered_college_df.to_csv("data/ML_Ready_NBA_College_Stats.csv", index=False)
