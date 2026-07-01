@@ -4,24 +4,26 @@ import numpy as np
 from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score, f1_score, classification_report
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
+from sklearn.neural_network import MLPClassifier
+from xgboost import XGBClassifier
+import lightgbm as lgb
+from sklearn.utils.class_weight import compute_class_weight
 
 from load_data import load_outcomes, load_college, build_training_set, label_encode
 from features import build_preprocessor, NUMERIC_FEATURES, CATEGORICAL_FEATURES
 
-#Includes random seed to ensure reproducibility
 np.random.seed(42)
 
-def train_model():
-    #Load data 
+def evaluate_models():
     outcomes = load_outcomes()
     college = load_college()
 
-    #Build training set
     train_df = build_training_set(college, outcomes)
     train_df, label_map = label_encode(train_df)
 
-    #Feature Engineering
+    #Feature_Engineering
     train_df['MPG'] = train_df["MP"] / train_df["G"]
     train_df['AST_TOV_Ratio'] = train_df["AST"] / (train_df["TOV"])
     train_df['NRTG'] = train_df["ORTG"] - train_df["DRTG"]
@@ -35,63 +37,59 @@ def train_model():
         "MPG", "AST_TOV_Ratio", "NRTG", "3P_FG_Ratio", "2P_FG_Ratio", "FT_PTS_Ratio", "2P_PTS_Ratio", "3P_PTS_Ratio"
     ]
 
-    #Features and target
     X = train_df[NUMERIC_FEATURES + CATEGORICAL_FEATURES + ENGINEERED_FEATURES]
-    y = train_df["label"]
+    y = train_df['label']
 
-    #Preprocessor
     preprocessor = build_preprocessor()
 
-    #Pipeline
-    pipeline = Pipeline(steps=[
-        ("preprocess", preprocessor),
-        ("model", LogisticRegression(
+    models = {
+        "XGBoost": XGBClassifier(
+            objective="multi:softprob",
+            num_class=4,
+            eval_metric="mlogloss",
+            random_state=42
+        ),
+        "LightGBM": lgb.LGBMClassifier(
+            objective="multiclass",
+            num_class=4,
+            random_state=42
+        ),
+        "RandomForest": RandomForestClassifier(
+            n_estimators=300,
+            random_state=42
+        ),
+        "LogisticRegression": LogisticRegression(
             multi_class="multinomial",
-            max_iter=1000,
-            class_weight="balanced",
-            solver="lbfgs"
-        ))
-    ])
-
-    #Hyperparameter grid
-    param_grid = {
-        "model__C": [0.1, 1.0, 3.0, 10.0],
-        "model__penalty": ["l2"],
-        "model__solver": ["lbfgs", "newton-cg"]
+            max_iter=500,
+            random_state=42
+        ),
+        "MLP": MLPClassifier(
+            hidden_layer_sizes=(128, 64),
+            max_iter=500,
+            random_state=42
+        )
     }
 
-    #GridSearchCV
-    grid = GridSearchCV(
-        estimator=pipeline,
-        param_grid=param_grid,
-        cv=5,
-        scoring="f1_macro",
-        n_jobs=-1,
-        verbose=2
-    )
+    results = []
 
-    #Train/val split
-    X_train, X_val, y_train, y_val = train_test_split(
-        X, y, test_size=0.2, stratify=y, random_state=42
-    )
+    for name, model in models.items():
+        pipe = Pipeline([
+            ("preprocess", preprocessor),
+            ("model", model)
+        ])
 
-    #Training with grid search
-    grid.fit(X_train, y_train)
+        scores = cross_val_score(
+            pipe,
+            X,
+            y,
+            cv=5,
+            scoring="f1_macro",
+            n_jobs=1
+        )
 
-    #Best model
-    clf = grid.best_estimator_
-
-    #Evaluate
-    y_pred = clf.predict(X_val)
-    print("Accuracy:", accuracy_score(y_val, y_pred))
-    print("Macro F1:", f1_score(y_val, y_pred, average="macro"))
-    print(classification_report(y_val, y_pred))
-
-    #Save model and label map
-    joblib.dump(clf, "models/nba_outcome_logreg.pkl")
-    joblib.dump(label_map, "models/label_logreg.pkl")
-
-    print("Model was saved.")
+        results.append((name, np.mean(scores)))
+    
+    print(results)
 
 if __name__ == "__main__":
-    train_model()
+    evaluate_models()
