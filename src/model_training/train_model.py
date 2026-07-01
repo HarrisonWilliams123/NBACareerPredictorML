@@ -76,8 +76,8 @@ def train_model():
     print(classification_report(y_val, y_pred))
 
     #Save model and label map
-    joblib.dump(clf, "models/nba_outcome_model3.pkl")
-    joblib.dump(label_map, "models/label_map3.pkl")
+    joblib.dump(clf, "models/nba_outcome_model4.pkl")
+    joblib.dump(label_map, "models/label_map4.pkl")
 
     print("Model was saved.")
 
