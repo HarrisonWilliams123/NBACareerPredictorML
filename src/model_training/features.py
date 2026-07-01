@@ -12,11 +12,21 @@ NUMERIC_FEATURES = [
 
 CATEGORICAL_FEATURES = ["Pos", "Conf", "Class"]
 
+ENGINEERED_FEATURES = [
+    "MPG", "AST_TOV_Ratio", "NRTG",
+    "3P_FG_Ratio", "2P_FG_Ratio", "FT_PTS_Ratio",
+    "2P_PTS_Ratio", "3P_PTS_Ratio",
+    "PTS_per_poss", "REB_per_poss", "AST_per_poss",
+    "STL_per_poss", "BLK_per_poss",
+    "TS_adj", "EFG_adj", "Usage",
+    "PTS_x_MPG", "Usage_x_TS", "AST_x_MPG"
+]
+
 #Returns a Column Transformer that scales numeric features and one-hot encodes categorical features
 def build_preprocessor():
     preprocessor = ColumnTransformer(
         transformers=[
-            ("num", StandardScaler(), NUMERIC_FEATURES),
+            ("num", StandardScaler(), NUMERIC_FEATURES + ENGINEERED_FEATURES),
             ("cat", OneHotEncoder(handle_unknown="ignore"), CATEGORICAL_FEATURES)
         ]
     )

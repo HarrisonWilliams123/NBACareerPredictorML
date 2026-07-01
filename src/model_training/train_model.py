@@ -7,7 +7,7 @@ from sklearn.metrics import accuracy_score, f1_score, classification_report
 from sklearn.linear_model import LogisticRegression
 
 from load_data import load_outcomes, load_college, build_training_set, label_encode
-from features import build_preprocessor, NUMERIC_FEATURES, CATEGORICAL_FEATURES
+from features import build_preprocessor, NUMERIC_FEATURES, CATEGORICAL_FEATURES, ENGINEERED_FEATURES
 
 #Includes random seed to ensure reproducibility
 np.random.seed(42)
@@ -21,19 +21,6 @@ def train_model():
     train_df = build_training_set(college, outcomes)
     train_df, label_map = label_encode(train_df)
 
-    #Feature Engineering
-    train_df['MPG'] = train_df["MP"] / train_df["G"]
-    train_df['AST_TOV_Ratio'] = train_df["AST"] / (train_df["TOV"])
-    train_df['NRTG'] = train_df["ORTG"] - train_df["DRTG"]
-    train_df['3P_FG_Ratio'] = train_df["3PA"] / train_df["FGA"]
-    train_df['2P_FG_Ratio'] = train_df["2PA"] / train_df["FGA"]
-    train_df['FT_PTS_Ratio'] = train_df["FT"] / train_df["PTS"]
-    train_df['2P_PTS_Ratio'] = (train_df["2P"] * 2) / train_df["PTS"]
-    train_df['3P_PTS_Ratio'] = (train_df["3P"] * 3) / train_df["PTS"]
-
-    ENGINEERED_FEATURES = [
-        "MPG", "AST_TOV_Ratio", "NRTG", "3P_FG_Ratio", "2P_FG_Ratio", "FT_PTS_Ratio", "2P_PTS_Ratio", "3P_PTS_Ratio"
-    ]
 
     #Features and target
     X = train_df[NUMERIC_FEATURES + CATEGORICAL_FEATURES + ENGINEERED_FEATURES]
@@ -47,7 +34,7 @@ def train_model():
         ("preprocess", preprocessor),
         ("model", LogisticRegression(
             multi_class="multinomial",
-            max_iter=1000,
+            max_iter=2000,
             class_weight="balanced",
             solver="lbfgs"
         ))
@@ -55,10 +42,14 @@ def train_model():
 
     #Hyperparameter grid
     param_grid = {
-        "model__C": [0.1, 1.0, 3.0, 10.0],
-        "model__penalty": ["l2"],
+        "model__C": [0.01, 0.1, 1.0, 3.0, 10.0, 30.0, 100.0],
         "model__solver": ["lbfgs", "newton-cg"]
     }
+
+    #Train/val split
+    X_train, X_val, y_train, y_val = train_test_split(
+        X, y, test_size=0.2, stratify=y, random_state=42
+    )
 
     #GridSearchCV
     grid = GridSearchCV(
@@ -70,11 +61,6 @@ def train_model():
         verbose=2
     )
 
-    #Train/val split
-    X_train, X_val, y_train, y_val = train_test_split(
-        X, y, test_size=0.2, stratify=y, random_state=42
-    )
-
     #Training with grid search
     grid.fit(X_train, y_train)
 
@@ -83,13 +69,14 @@ def train_model():
 
     #Evaluate
     y_pred = clf.predict(X_val)
+    print("Best Params:", grid.best_params_)
     print("Accuracy:", accuracy_score(y_val, y_pred))
     print("Macro F1:", f1_score(y_val, y_pred, average="macro"))
     print(classification_report(y_val, y_pred))
 
     #Save model and label map
-    joblib.dump(clf, "models/nba_outcome_logreg.pkl")
-    joblib.dump(label_map, "models/label_logreg.pkl")
+    joblib.dump(clf, "models/nba_outcome_logreg2.pkl")
+    joblib.dump(label_map, "models/label_logreg2.pkl")
 
     print("Model was saved.")
 
