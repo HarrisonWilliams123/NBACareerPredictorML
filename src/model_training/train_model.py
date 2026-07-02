@@ -35,16 +35,16 @@ def train_model():
     #Preprocessor
     preprocessor = build_preprocessor()
 
-    model = XGBClassifier(
-        objective="multi:softprob",
+    model = lgb.LGBMClassifier(
+        objective="multiclass",
         num_class=4,
+        random_state=42,
+        class_weight="balanced",
         n_estimators=300,
-        max_depth=5, 
         learning_rate=0.05,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        eval_metric="mlogloss",
-        random_state=42
+        num_leaves=31,
+        subsample=0.9,
+        colsample_bytree=0.9
     )
 
     #Pipeline
