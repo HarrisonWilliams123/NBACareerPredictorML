@@ -31,4 +31,4 @@ def predict_prospects():
 
 if __name__ == "__main__":
     df = predict_prospects()
-    df.to_csv("prospect_predictions6.csv", index=False)
+    df.to_csv("prospect_predictions_final.csv", index=False)

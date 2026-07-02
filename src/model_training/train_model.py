@@ -6,6 +6,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score, f1_score, classification_report
 import lightgbm as lgb
 from xgboost import XGBClassifier
+from sklearn.linear_model import LogisticRegression
 
 from load_data import load_outcomes, load_college, build_training_set, label_encode
 from features import build_preprocessor, NUMERIC_FEATURES, CATEGORICAL_FEATURES, ENGINEERED_FEATURES
@@ -35,16 +36,12 @@ def train_model():
     #Preprocessor
     preprocessor = build_preprocessor()
 
-    model = lgb.LGBMClassifier(
-        objective="multiclass",
-        num_class=4,
-        random_state=42,
+    model = LogisticRegression(
+        multi_class="multinomial",
+        solver="lbfgs",
+        max_iter=2000,
         class_weight="balanced",
-        n_estimators=300,
-        learning_rate=0.05,
-        num_leaves=31,
-        subsample=0.9,
-        colsample_bytree=0.9
+        C=3.0
     )
 
     #Pipeline
@@ -83,8 +80,8 @@ def train_model():
     print(classification_report(y_val, y_pred))
 
     #Save model and label map
-    joblib.dump(pipeline, "models/nba_outcome_lightgbm.pkl")
-    joblib.dump(label_map, "models/label_lightgbm.pkl")
+    joblib.dump(pipeline, "models/nba_outcome_final.pkl")
+    joblib.dump(label_map, "models/label_final.pkl")
 
     print("Model was saved.")
 

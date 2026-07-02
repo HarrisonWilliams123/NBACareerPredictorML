@@ -26,7 +26,8 @@ ENGINEERED_FEATURES = [
 def build_preprocessor():
     preprocessor = ColumnTransformer(
         transformers=[
-            ("cat", OneHotEncoder(handle_unknown="ignore"), CATEGORICAL_FEATURES)
+            ("cat", OneHotEncoder(handle_unknown="ignore"), CATEGORICAL_FEATURES),
+            ("num", StandardScaler(), ENGINEERED_FEATURES + NUMERIC_FEATURES)
         ],
         remainder="passthrough"
     )
