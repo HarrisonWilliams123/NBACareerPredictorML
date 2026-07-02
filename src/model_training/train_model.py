@@ -5,6 +5,7 @@ from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_sc
 from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score, f1_score, classification_report
 import lightgbm as lgb
+from xgboost import XGBClassifier
 
 from load_data import load_outcomes, load_college, build_training_set, label_encode
 from features import build_preprocessor, NUMERIC_FEATURES, CATEGORICAL_FEATURES, ENGINEERED_FEATURES
@@ -26,22 +27,25 @@ def train_model():
     X = train_df[NUMERIC_FEATURES + CATEGORICAL_FEATURES + ENGINEERED_FEATURES]
     y = train_df["label"]
 
+    #Train/val split
+    X_train, X_val, y_train, y_val = train_test_split(
+        X, y, test_size=0.2, stratify=y, random_state=42
+    )
+
     #Preprocessor
     preprocessor = build_preprocessor()
 
-    model = lgb.LGBMClassifier(
-        objective="multiclass",
+    model = XGBClassifier(
+        objective="multi:softprob",
         num_class=4,
-        random_state=42,
-        class_weight="balanced",
-        n_estimators=600,
+        n_estimators=300,
+        max_depth=5, 
         learning_rate=0.05,
-        num_leaves=50,
-        max_depth=-1,
         subsample=0.8,
-        colsample_bytree=0.8
+        colsample_bytree=0.8,
+        eval_metric="mlogloss",
+        random_state=42
     )
-
 
     #Pipeline
     pipeline = Pipeline(steps=[
@@ -54,11 +58,6 @@ def train_model():
         #"model__C": [0.01, 0.1, 1.0, 3.0, 10.0, 30.0, 100.0],
         #"model__solver": ["lbfgs", "newton-cg"]
     #}
-
-    #Train/val split
-    X_train, X_val, y_train, y_val = train_test_split(
-        X, y, test_size=0.2, stratify=y, random_state=42
-    )
 
     #GridSearchCV
     #grid = GridSearchCV(
